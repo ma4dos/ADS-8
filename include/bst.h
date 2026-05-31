@@ -37,7 +37,7 @@ class BST {
   }
 
   int depthNode(Node* node) const {
-    if (node == nullptr) return 0;
+    if (node == nullptr) return -1;
     int leftDepth = depthNode(node->left);
     int rightDepth = depthNode(node->right);
     return 1 + (leftDepth > rightDepth ? leftDepth : rightDepth);
