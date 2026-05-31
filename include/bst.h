@@ -1,72 +1,90 @@
 // Copyright 2025 NNTU-CS
-#include <fstream>
+#ifndef INCLUDE_BST_H_
+#define INCLUDE_BST_H_
+
 #include <string>
-#include <cctype>
-#include <vector>
-#include <utility>
-#include <algorithm>
-#include <iostream>
-#include "bst.h"
 
-void makeTree(BST<std::string>& tree, const char* filename) {
-  std::ifstream file(filename);
-  if (!file) {
-    std::string altPath = std::string("../") + filename;
-    file.open(altPath);
-    if (!file) {
-      altPath = std::string("../src/") + filename;
-      file.open(altPath);
+template <typename T>
+class BST {
+ public:
+  struct Node {
+    T value;
+    int count;
+    Node* left;
+    Node* right;
+  };
+
+ private:
+  Node* root;
+
+  Node* addNode(Node* node, const T& value) {
+    if (node == nullptr) {
+      node = new Node;
+      node->value = value;
+      node->count = 1;
+      node->left = nullptr;
+      node->right = nullptr;
+      return node;
     }
-    if (!file) {
-      std::cout << "File error!" << std::endl;
-      return;
+    if (value < node->value) {
+      node->left = addNode(node->left, value);
+    } else if (value > node->value) {
+      node->right = addNode(node->right, value);
+    } else {
+      node->count++;
+    }
+    return node;
+  }
+
+  int depthNode(Node* node) const {
+    if (node == nullptr) return 0;
+    int leftDepth = depthNode(node->left);
+    int rightDepth = depthNode(node->right);
+    return 1 + (leftDepth > rightDepth ? leftDepth : rightDepth);
+  }
+
+  Node* searchNode(Node* node, const T& value) const {
+    if (node == nullptr || node->value == value) {
+      return node;
+    }
+    if (value < node->value) {
+      return searchNode(node->left, value);
+    } else {
+      return searchNode(node->right, value);
     }
   }
 
-  std::string word;
-  int ch;
-  while ((ch = file.get()) != EOF) {
-    if (std::isalpha(static_cast<unsigned char>(ch))) {
-      word += static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-    } else if (!word.empty()) {
-      tree.add(word);
-      word.clear();
-    }
-  }
-  if (!word.empty()) {
-    tree.add(word);
+  void clearTree(Node* node) {
+    if (node == nullptr) return;
+    clearTree(node->left);
+    clearTree(node->right);
+    delete node;
   }
 
-  file.close();
-}
+ public:
+  BST() : root(nullptr) {}
 
-void printFreq(BST<std::string>& tree) {
-  std::vector<std::pair<std::string, int>> freq;
-
-  std::vector<typename BST<std::string>::Node*> stack;
-  typename BST<std::string>::Node* current = tree.getRoot();
-  while (current != nullptr || !stack.empty()) {
-    while (current != nullptr) {
-      stack.push_back(current);
-      current = current->left;
-    }
-    current = stack.back();
-    stack.pop_back();
-    freq.push_back({current->value, current->count});
-    current = current->right;
+  ~BST() {
+    clearTree(root);
   }
 
-  std::sort(freq.begin(), freq.end(),
-    [](const std::pair<std::string, int>& a,
-       const std::pair<std::string, int>& b) {
-      if (a.second == b.second) return a.first < b.first;
-      return a.second > b.second;
-    });
-
-  std::ofstream out("result/freq.txt");
-  for (const auto& p : freq) {
-    std::cout << p.first << " " << p.second << std::endl;
-    out << p.first << " " << p.second << std::endl;
+  void add(const T& value) {
+    root = addNode(root, value);
   }
-  out.close();
-}
+
+  int depth() const {
+    return depthNode(root);
+  }
+
+  int search(const T& value) const {
+    Node* node = searchNode(root, value);
+    if (node == nullptr) return 0;
+    return node->count;
+  }
+
+  Node* getRoot() const {
+    return root;
+  }
+};
+
+#endif  // INCLUDE_BST_H_
